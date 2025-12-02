@@ -35,16 +35,6 @@
 			path = SwiftUITraining;
 			sourceTree = "<group>";
 		};
-		7C9836412EDF5AB0007C12E6 /* SwiftUITrainingTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = SwiftUITrainingTests;
-			sourceTree = "<group>";
-		};
-		7C98364B2EDF5AB0007C12E6 /* SwiftUITrainingUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = SwiftUITrainingUITests;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,8 +66,6 @@
 			isa = PBXGroup;
 			children = (
 				7C9836332EDF5AAF007C12E6 /* SwiftUITraining */,
-				7C9836412EDF5AB0007C12E6 /* SwiftUITrainingTests */,
-				7C98364B2EDF5AB0007C12E6 /* SwiftUITrainingUITests */,
 				7C9836322EDF5AAF007C12E6 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -130,9 +118,6 @@
 			dependencies = (
 				7C9836402EDF5AB0007C12E6 /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				7C9836412EDF5AB0007C12E6 /* SwiftUITrainingTests */,
-			);
 			name = SwiftUITrainingTests;
 			packageProductDependencies = (
 			);
@@ -152,9 +137,6 @@
 			);
 			dependencies = (
 				7C98364A2EDF5AB0007C12E6 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				7C98364B2EDF5AB0007C12E6 /* SwiftUITrainingUITests */,
 			);
 			name = SwiftUITrainingUITests;
 			packageProductDependencies = (
