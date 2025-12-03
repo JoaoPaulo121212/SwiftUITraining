@@ -11,11 +11,13 @@ import SwiftData
 @Model //A macro @Model torna esta struct persistivel (salvavel no banco de dados SwiftData)
 final class TaskItem{
     var name : String
+    var details : String
     var isCompleted: Bool
     var creationDate: Date
     
-    init(name: String = "", isCompleted: Bool = false, creationDate: Date = Date()) {
+    init(name: String = "",details : String = "", isCompleted: Bool = false, creationDate: Date = Date()) {
         self.name = name
+        self.details = details
         self.isCompleted = isCompleted
         self.creationDate = creationDate
     }
@@ -28,26 +30,38 @@ struct ContentView: View {
     @Query(sort: \TaskItem.creationDate, order: .reverse) private var tasks: [TaskItem]
     // @State: Controla o estado local desta View (a abertura do modal)
     @State private var showingAddTaskSheet = false
-    @State private var lastDeletedTaskParams: (name: String, date: Date)? = nil
+    @State private var lastDeletedTaskParams: (name: String,details: String, date: Date)? = nil
     var body: some View {
         NavigationStack {
             List {
                 ForEach(tasks) { task in
                     @Bindable var task = task
-                    // HStack: Layout horizontal para o contéudo da célula da lista
-                    HStack{
-                        //isCompleted: Controlado por um Binding dentro da Toggle
-                        Toggle(task.name, isOn: $task.isCompleted)
-                        //aplica modificadores com base no estado (isCompleted)
-                            .strikethrough(task.isCompleted)
-                            .foregroundColor(task.isCompleted ? .gray : .primary)
+                    HStack {
+                        // Toggle modificado para aceitar Views customizadas no label
+                        Toggle(isOn: $task.isCompleted) {
+                            VStack(alignment: .leading) {
+                                Text(task.name)
+                                    .font(.headline) // Destaque para o título
+                                    .strikethrough(task.isCompleted)
+                                    .foregroundColor(task.isCompleted ? .gray : .primary)
+                                
+                                // Só mostra se tiver detalhe escrito
+                                if !task.details.isEmpty {
+                                    Text(task.details)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                        .strikethrough(task.isCompleted) // Opcional: riscar o detalhe também
+                                }
+                            }
+                        }
+                        .toggleStyle(.button) // Mantendo seu estilo de botão
+                        
                         Spacer()
                         
                         Text(task.creationDate.formatted(date: .omitted, time: .shortened))
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
-                    .toggleStyle(.button) //oculta o r[otulo do toggle, mas mant[em sua funcionalidade de clique
                 }
                 .onDelete(perform: deleteTask) // habilita o gesto de deslizar para deletar
             }
@@ -85,7 +99,7 @@ struct ContentView: View {
             for index in offsets {
                 let taskToDelete = tasks[index]
                 //salva em um backup
-                lastDeletedTaskParams = (taskToDelete.name, taskToDelete.creationDate)
+                lastDeletedTaskParams = (taskToDelete.name,taskToDelete.details, taskToDelete.creationDate)
                 // deleta do banco de dados
                 modelContext.delete(taskToDelete)
             }
@@ -98,6 +112,7 @@ struct ContentView: View {
                 //recria a tarefa com os mesmos dados antigos
                 let restoredTask = TaskItem(
                     name: params.name,
+                    details: params.details,
                     isCompleted: false, // apenas para quando voltar, voltar como dependente
                     creationDate: params.date
                 )
@@ -115,11 +130,15 @@ struct AddTaskView : View {
     @Environment(\.dismiss) var dismiss
     
     @State private var taskName: String = ""
+    @State private var taskDetails: String = ""
     
     var body: some View {
         NavigationStack{
             Form {
                 TextField("Nome da nova tarefa", text: $taskName)
+                // .axis: .vertical permite que o campo cresça se o texto for longo
+                TextField("Detalhes (opcional)", text: $taskDetails, axis: .vertical)
+                    .lineLimit(3...6) // define o tamanho minimo e maximo visual
             }
             .navigationTitle("Nova Tarefa")
             .toolbar {
@@ -140,7 +159,7 @@ struct AddTaskView : View {
         }
     }
     private func saveTask() {
-        let newTask = TaskItem(name: taskName)
+        let newTask = TaskItem(name: taskName, details: taskDetails)
         modelContext.insert(newTask)
     }
 }
