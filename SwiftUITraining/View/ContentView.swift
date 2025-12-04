@@ -14,12 +14,14 @@ final class TaskItem{
     var details : String
     var isCompleted: Bool
     var creationDate: Date
+    var dueDate: Date
     
-    init(name: String = "",details : String = "", isCompleted: Bool = false, creationDate: Date = Date()) {
+    init(name: String = "",details : String = "", isCompleted: Bool = false, creationDate: Date = Date(), dueDate: Date = Date()) {
         self.name = name
         self.details = details
         self.isCompleted = isCompleted
         self.creationDate = creationDate
+        self.dueDate = dueDate
     }
 }
 
@@ -30,7 +32,7 @@ struct ContentView: View {
     @Query(sort: \TaskItem.creationDate, order: .reverse) private var tasks: [TaskItem]
     // @State: Controla o estado local desta View (a abertura do modal)
     @State private var showingAddTaskSheet = false
-    @State private var lastDeletedTaskParams: (name: String,details: String, date: Date)? = nil
+    @State private var lastDeletedTaskParams: (name: String,details: String, date: Date, dueDate: Date)? = nil
     var body: some View {
         NavigationStack {
             List {
@@ -52,6 +54,13 @@ struct ContentView: View {
                                         .foregroundColor(.secondary)
                                         .strikethrough(task.isCompleted) // Opcional: riscar o detalhe também
                                 }
+                                HStack{
+                                    Image(systemName: "calendar")
+                                    Text(task.dueDate.formatted(date: .numeric, time: .shortened))
+                                }
+                                .font(.caption2)
+                                .foregroundStyle(.blue)
+                                .padding(.top, 2)
                             }
                         }
                         .toggleStyle(.button) // Mantendo seu estilo de botão
@@ -99,7 +108,7 @@ struct ContentView: View {
             for index in offsets {
                 let taskToDelete = tasks[index]
                 //salva em um backup
-                lastDeletedTaskParams = (taskToDelete.name,taskToDelete.details, taskToDelete.creationDate)
+                lastDeletedTaskParams = (taskToDelete.name,taskToDelete.details,taskToDelete.dueDate, taskToDelete.creationDate)
                 // deleta do banco de dados
                 modelContext.delete(taskToDelete)
             }
@@ -114,7 +123,8 @@ struct ContentView: View {
                     name: params.name,
                     details: params.details,
                     isCompleted: false, // apenas para quando voltar, voltar como dependente
-                    creationDate: params.date
+                    creationDate: params.date,
+                    dueDate: params.date
                 )
                 //insere a tarefa no contexto para salvar no banco de dados
                 modelContext.insert(restoredTask)
@@ -131,14 +141,20 @@ struct AddTaskView : View {
     
     @State private var taskName: String = ""
     @State private var taskDetails: String = ""
+    @State private var taskDate: Date = Date()
     
     var body: some View {
         NavigationStack{
             Form {
-                TextField("Nome da nova tarefa", text: $taskName)
-                // .axis: .vertical permite que o campo cresça se o texto for longo
-                TextField("Detalhes (opcional)", text: $taskDetails, axis: .vertical)
-                    .lineLimit(3...6) // define o tamanho minimo e maximo visual
+                Section("Informações Básicas"){
+                    TextField("Nome da nova tarefa", text: $taskName)
+                    // .axis: .vertical permite que o campo cresça se o texto for longo
+                    TextField("Detalhes (opcional)", text: $taskDetails, axis: .vertical)
+                        .lineLimit(3...6) // define o tamanho minimo e maximo visual
+                }
+                Section("Agendamento"){
+                    DatePicker("Para quando?", selection: $taskDate, in: Date()..., displayedComponents: .date)
+                }
             }
             .navigationTitle("Nova Tarefa")
             .toolbar {
