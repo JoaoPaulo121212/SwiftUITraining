@@ -32,10 +32,10 @@ struct ContentView: View {
     //Environment : Acesso ao contexto do banco de dados (gerenciado pelo TaskMasterAp.swift)
     @Environment(\.modelContext) private var modelContext
     // @Query: Busca todos os TaskItem salvos, mantendo a lista atualizada automaticamente
-    @Query(sort: \TaskItem.creationDate, order: .reverse) private var tasks: [TaskItem]
+    @Query(sort: \TaskItem.dueDate, order: .forward) private var tasks: [TaskItem]
     // @State: Controla o estado local desta View (a abertura do modal)
     @State private var showingAddTaskSheet = false
-    @State private var lastDeletedTaskParams: (name: String, details: String, savedDueDate: Date, savedCreationDate: Date)? = nil
+    @State private var deletedTasksHistory: [(name: String, details: String, savedDueDate: Date, savedCreationDate: Date)] = []
     
     //Cria a instancia do delegado
     @State private var notificationDelegate = NotificationDelegate()
@@ -78,9 +78,6 @@ struct ContentView: View {
                             }
                         Spacer()
                         .contentShape(Rectangle())
-//                        Text(task.creationDate.formatted(date: .omitted, time: .shortened))
-//                            .font(.caption)
-//                            .foregroundColor(.secondary)
                     }
                 }
                 .onDelete(perform: deleteTask) // habilita o gesto de deslizar para deletar
@@ -91,7 +88,7 @@ struct ContentView: View {
                     EditButton() // botão nativo de edição
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                   if lastDeletedTaskParams != nil {
+                    if !deletedTasksHistory.isEmpty {
                        Button {
                            returnLastTask()
                        } label : {
@@ -129,13 +126,14 @@ struct ContentView: View {
                 let taskToDelete = tasks[index]
                 //cancela a notificação agendada
                 UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [taskToDelete.id.uuidString])
-                //salva em um backup
-                lastDeletedTaskParams = (
-                    taskToDelete.name,
-                    taskToDelete.details,
-                    taskToDelete.dueDate,
-                    taskToDelete.creationDate
-                )
+                
+                
+                deletedTasksHistory.append((
+                    name: taskToDelete.name,
+                    details: taskToDelete.details,
+                    savedCreationDate: taskToDelete.creationDate,
+                    savedDueDate: taskToDelete.dueDate
+                ))
                 // deleta do banco de dados
                 modelContext.delete(taskToDelete)
             }
@@ -145,7 +143,7 @@ struct ContentView: View {
     private func returnLastTask(){
         withAnimation {
             //verifica se existe algo no backup
-            if let params = lastDeletedTaskParams {
+            if let params = deletedTasksHistory.popLast() {
                 //recria a tarefa com os mesmos dados antigos
                 let restoredTask = TaskItem(
                     name: params.name,
@@ -156,8 +154,10 @@ struct ContentView: View {
                 )
                 //insere a tarefa no contexto para salvar no banco de dados
                 modelContext.insert(restoredTask)
-                //limpa a variavel, fazendo o botao sumir caso nao tenha
-                lastDeletedTaskParams = nil
+                if restoredTask.dueDate > Date() {
+                    scheduleNotification(for: restoredTask)
+                }
+                
             }
         }
     }
