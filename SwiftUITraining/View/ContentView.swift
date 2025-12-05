@@ -45,8 +45,16 @@ struct ContentView: View {
                 ForEach(tasks) { task in
                     @Bindable var task = task
                     HStack {
-                        // Toggle modificado para aceitar Views customizadas no label
-                        Toggle(isOn: $task.isCompleted) {
+                        Button{
+                            toggleTaskCompletion(task)
+                        }label: {
+                            Image(systemName:task.isCompleted ? "checkmark.circle.fill" : "checkmark.circle")
+                                .font(.title2)
+                                .foregroundColor(task.isCompleted ? .green : .gray)
+                        }
+                        .buttonStyle(.plain) // Importante para o clique não pegar na linha toda
+                        .padding(.trailing, 5)
+
                             VStack(alignment: .leading) {
                                 Text(task.name)
                                     .font(.headline) // Destaque para o título
@@ -68,14 +76,11 @@ struct ContentView: View {
                                 .foregroundStyle(.blue)
                                 .padding(.top, 2)
                             }
-                        }
-                        .toggleStyle(.button) // Mantendo estilo de botão
-                        
                         Spacer()
-                        
-                        Text(task.creationDate.formatted(date: .omitted, time: .shortened))
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                        .contentShape(Rectangle())
+//                        Text(task.creationDate.formatted(date: .omitted, time: .shortened))
+//                            .font(.caption)
+//                            .foregroundColor(.secondary)
                     }
                 }
                 .onDelete(perform: deleteTask) // habilita o gesto de deslizar para deletar
@@ -156,6 +161,42 @@ struct ContentView: View {
             }
         }
     }
+    
+    private func toggleTaskCompletion(_ task: TaskItem){
+        task.isCompleted.toggle()
+        
+        let center = UNUserNotificationCenter.current()
+        
+        if task.isCompleted {
+            center.removePendingNotificationRequests(withIdentifiers: [task.id.uuidString])
+        } else {
+            // Se descompletou e a data ainda é no futuro, REAGENDA (Opcional, mas recomendado)
+            if task.dueDate > Date() {
+               scheduleNotification(for: task)
+               print("Tarefa reaberta: Notificação reagendada.")
+            }
+        }
+    }
+    
+    private func scheduleNotification(for task: TaskItem) {
+        let content = UNMutableNotificationContent()
+        content.title = "Hora da tarefa"
+        content.body = task.name //o texto sera o nome da tarefa
+        content.sound = .default
+        
+        //pega os componentes da data escolhida
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.year, .month, .day, .hour, .minute] ,from: task.dueDate)
+        
+        //cria o gatilho (trigger) baseado na data
+        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+        
+        //cria o a requisicao usando o ID da tarefa
+        let request = UNNotificationRequest(identifier: task.id.uuidString, content: content, trigger: trigger)
+        
+        UNUserNotificationCenter.current().add(request)
+    }
+    
 }
 class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
