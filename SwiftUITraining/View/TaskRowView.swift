@@ -24,10 +24,20 @@ struct TaskRowView: View {
             .padding(.trailing, 5)
 
             VStack(alignment: .leading) {
+                
                 Text(task.name)
                     .font(.headline)
                     .strikethrough(task.isCompleted)
                     .foregroundColor(task.isCompleted ? .gray : .primary)
+                
+                if !task.isCompleted {
+                    Image(systemName: task.priority.icon)
+                        .foregroundStyle(task.priority.color)
+                        .font(.caption)
+                        .padding(4)
+                        .background(task.priority.color.opacity(0.1))
+                        .clipShape(Circle())
+                }
                 
                 if !task.details.isEmpty {
                     Text(task.details)

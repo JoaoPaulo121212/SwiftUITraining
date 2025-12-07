@@ -17,8 +17,9 @@ final class TaskItem{
     var isHidden: Bool
     var creationDate: Date
     var dueDate: Date
+    var priority: TaskPriority
     
-    init(name: String = "",details : String = "", isCompleted: Bool = false,isHidden: Bool = false, creationDate: Date = Date(), dueDate: Date = Date()) {
+    init(name: String = "",details : String = "", isCompleted: Bool = false,isHidden: Bool = false, creationDate: Date = Date(), dueDate: Date = Date(), priority: TaskPriority = .medium) {
         self.id = UUID() // gera um id aleatório
         self.name = name
         self.details = details
@@ -26,5 +27,6 @@ final class TaskItem{
         self.isHidden = isHidden
         self.creationDate = creationDate
         self.dueDate = dueDate
+        self.priority = priority
     }
 }

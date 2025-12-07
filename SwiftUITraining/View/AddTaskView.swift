@@ -15,6 +15,7 @@ struct AddTaskView: View {
     @State private var taskName: String = ""
     @State private var taskDetails: String = ""
     @State private var taskDate: Date = Date()
+    @State private var taskPriority: TaskPriority = .medium
     
     var body: some View {
         NavigationStack {
@@ -23,6 +24,16 @@ struct AddTaskView: View {
                     TextField("Nome da nova tarefa", text: $taskName)
                     TextField("Detalhes (opcional)", text: $taskDetails, axis: .vertical)
                         .lineLimit(3...6)
+                }
+                Section("Prioridade"){
+                    Picker("Nível de Prioridade", selection: $taskPriority){
+                        ForEach(TaskPriority.allCases, id: \.self){ priority in
+                            Text(priority.rawValue)
+                                .foregroundColor(priority.color)
+                                .tag(priority)
+                        }
+                    }
+                    .pickerStyle(.segmented) //estilo em barra horizontal
                 }
                 Section("Agendamento") {
                     DatePicker("Para quando?", selection: $taskDate, in: Date()..., displayedComponents: [.date, .hourAndMinute])
@@ -45,14 +56,11 @@ struct AddTaskView: View {
     }
     
     private func saveTask() {
-        let newTask = TaskItem(name: taskName, details: taskDetails, dueDate: taskDate)
+        let newTask = TaskItem(name: taskName, details: taskDetails, dueDate: taskDate, priority: taskPriority)
         modelContext.insert(newTask)
         
-        do {
-                try modelContext.save()
-            } catch {
-                print("Erro ao salvar tarefa: \(error)")
-            }
+        modelContext.insert(newTask)
+        try? modelContext.save()
         
         // Usa o Manager Singleton
         NotificationManager.shared.scheduleNotification(for: newTask)

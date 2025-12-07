@@ -10,7 +10,7 @@ import SwiftData
 
 @Observable
 class TaskListViewModel {
-    var deletedTasksHistory: [(name: String, details: String, savedDueDate: Date, savedCreationDate: Date)] = []
+    var deletedTasksHistory: [(name: String, details: String, savedDueDate: Date, savedCreationDate: Date, savedPriority: TaskPriority)] = []
     
     func toggleTaskCompletion(_ task: TaskItem) {
         task.isCompleted.toggle()
@@ -22,7 +22,7 @@ class TaskListViewModel {
         }
     }
     
-    func toggleHideTask(_ task: TaskItem) {
+    func toggleHideTask(_ task: TaskItem, context: ModelContext) {
         withAnimation {
             task.isHidden.toggle()
         }
@@ -39,7 +39,8 @@ class TaskListViewModel {
                     name: taskToDelete.name,
                     details: taskToDelete.details,
                     savedDueDate: taskToDelete.dueDate,
-                    savedCreationDate: taskToDelete.creationDate
+                    savedCreationDate: taskToDelete.creationDate,
+                    savedPriority: taskToDelete.priority
                 ))
                 
                 context.delete(taskToDelete)
@@ -56,7 +57,8 @@ class TaskListViewModel {
                     isCompleted: false,
                     isHidden: false,
                     creationDate: params.savedCreationDate,
-                    dueDate: params.savedDueDate
+                    dueDate: params.savedDueDate,
+                    priority: params.savedPriority
                 )
                 
                 context.insert(restoredTask)
